@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Simulation</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f0f2f5;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 300px;
+            text-align: center;
+        }
+        .hidden { display: none; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .link {
+            color: #007bff;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: block;
+            margin-top: 10px;
+            text-decoration: underline;
+        }
+        nav {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.8rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.8rem;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="container">
+        <input type="text" id="loginUser" placeholder="email or phone number">
+        <input type="password" id="loginPass" placeholder="password">
+        <button onclick="handleLogin()">Login</button>
+        <span class="link">Forgot pass</span>
+        <span class="link" onclick="showPage('signupPage')">Create account</span>
+    </div>
+
+    <!-- SIGNUP PAGE -->
+    <div id="signupPage" class="container hidden">
+        <h3>Create Account</h3>
+        <input type="text" id="regName" placeholder="Full Name">
+        <input type="text" id="regUser" placeholder="email or phone number">
+        <input type="password" id="regPass" placeholder="password">
+        <button onclick="handleSignup()">Sign Up</button>
+        <span class="link" onclick="showPage('loginPage')">Back to Login</span>
+    </div>
+
+    <!-- WELCOME PAGE -->
+    <div id="welcomePage" class="container hidden">
+        <h2 id="welcomeText">Welcome back!!</h2>
+        <button onclick="showPage('homePage')">Continue</button>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div id="homePage" class="hidden" style="width:100%;">
+        <nav>
+            <span>Home</span>
+            <span onclick="showAdmin()" style="cursor:pointer">Profile (Admin)</span>
+            <span>Message</span>
+            <span>People</span>
+            <span onclick="logout()" style="cursor:pointer; font-weight:bold;">Log out</span>
+        </nav>
+
+        <div class="container" style="margin: 100px auto;">
+            <h3>Home Feed</h3>
+            <p>You are successfully logged in.</p>
+        </div>
+    </div>
+
+    <!-- ADMIN PAGE -->
+    <div id="adminPage" class="container hidden" style="width: 80%; max-width: 500px;">
+        <h3>Admin: Registered Users</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>User/Phone</th>
+                    <th>Password</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+        </table>
+
+        <button onclick="showPage('homePage')" style="margin-top: 10px;">
+            Back to Home
+        </button>
+    </div>
+
+    <script>
+        // Setup default Admin Account
+        if (!localStorage.getItem("users")) {
+            localStorage.setItem(
+                "users",
+                JSON.stringify([{ name: "Admin", user: "admin", pass: "1234" }])
+            );
+        }
+
+        // Show Page Function
+        function showPage(pageId) {
+            document.querySelectorAll("body > div").forEach(div => {
+                div.classList.add("hidden");
+            });
+            document.getElementById(pageId).classList.remove("hidden");
+        }
+
+        // Signup Function
+        function handleSignup() {
+            const name = document.getElementById("regName").value;
+            const user = document.getElementById("regUser").value;
+            const pass = document.getElementById("regPass").value;
+
+            if (name && user && pass) {
+                let users = JSON.parse(localStorage.getItem("users"));
+                users.push({ name, user, pass });
+                localStorage.setItem("users", JSON.stringify(users));
+
+                alert("Account created successfully!");
+                showPage("loginPage");
+            } else {
+                alert("Please fill all fields");
+            }
+        }
+
+        // Login Function
+        function handleLogin() {
+            const userIn = document.getElementById("loginUser").value;
+            const passIn = document.getElementById("loginPass").value;
+
+            const users = JSON.parse(localStorage.getItem("users"));
+
+            const foundUser = users.find(
+                u => u.user === userIn && u.pass === passIn
+            );
+
+            if (foundUser) {
+                document.getElementById("welcomeText").innerText =
+                    `Welcome back!! ${foundUser.name}`;
+
+                showPage("welcomePage");
+            } else {
+                alert("Invalid username or password!");
+            }
+        }
+
+        // Admin Table Function
+        function showAdmin() {
+            const users = JSON.parse(localStorage.getItem("users"));
+            const tbody = document.getElementById("userTableBody");
+
+            tbody.innerHTML = "";
+
+            users.forEach(u => {
+                tbody.innerHTML +=
+                    `<tr>
+                        <td>${u.name}</td>
+                        <td>${u.user}</td>
+                        <td>${u.pass}</td>
+                    </tr>`;
+            });
+
+            showPage("adminPage");
+        }
+
+        // Logout Function
+        function logout() {
+            location.reload();
+        }
+    </script>
+
+</body>
+</html>
